@@ -15,6 +15,10 @@
 		});
 	};
 	const storage = {
+		/**
+		 * 初始化数据库
+		 * @return {Promise}
+		 */
 		init(){
 			return new Promise((resolve,reject)=>{
 				if(db){
@@ -35,10 +39,21 @@
 				}
 			});
 		},
+		/**
+		 * 添加数据
+		 * @param {String} k 
+		 * @param {String|Object} v
+		 * @return {Promise}
+		 */
 		setItem(k,v){
 			this.init();
 			return runTransaction(store=>store.put({k,v}),'readwrite');
 		},
+		/**
+		 * 获取数据
+		 * @param {String} k
+		 * @return {Promise<String|Object>}
+		 */
 		getItem(k){
 			this.init();
 			return new Promise(async (resolve,reject)=>{
@@ -56,10 +71,19 @@
 				request.onerror = reject;
 			});
 		},
+		/**
+		 * 删除数据
+		 * @param {String} k
+		 * @return {Promise}
+		 */
 		removeItem(k){
 			this.init();
 			return runTransaction(store=>store.delete(k),'readwrite');
 		},
+		/**
+		 * 清空数据
+		 * @return {Promise}
+		 */
 		clear(){
 			this.init();
 			return runTransaction(store=>store.clear());
