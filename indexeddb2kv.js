@@ -5,6 +5,11 @@
 	/**@type {Promise<IDBDatabase>} */
 	let db;
 	const version = 1;
+	/**
+	 * 
+	 * @param {*} cb 
+	 * @param {'readonly'|'readwrite'} mode 
+	 */
 	const runTransaction = function(cb,mode='readonly'){
 		return new Promise(async(resolve,reject)=>{
 			let transaction = (await db).transaction('keyValueTable',mode);
@@ -89,5 +94,13 @@
 			return runTransaction(store=>store.clear());
 		},
 	};
-	g.indexeddb2kv = storage;
+	// output
+	if (typeof module === "object" && typeof module.exports === "object") {
+		module.exports = storage;
+	}
+	else if (typeof define === "function" && define.amd) {
+		define(["require", "exports"], ()=>storage);
+	}else{
+		g.indexeddb2kv = storage;
+	}
 })(this);
