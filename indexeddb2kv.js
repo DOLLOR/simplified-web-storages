@@ -111,7 +111,7 @@
 		},
 	};
 
-	function I2K(dbName='keyValueDatabase',tbName='keyValueTable'){
+	function I2K(dbName=storage.dataBaseName,tbName=storage.tableName){
 		if(!this) return new I2K(dbName,tbName);
 		this.dataBaseName = dbName;
 		this.tableName = tbName;
