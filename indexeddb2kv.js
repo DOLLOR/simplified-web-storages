@@ -2,43 +2,45 @@
 	"use strict";
 	/**@type {IDBFactory} */
 	const indexedDB = g.indexedDB || g.webkitIndexedDB || g.mozIndexedDB || g.msIndexedDB;
-	/**@type {Promise<IDBDatabase>} */
-	let db;
-	const version = 1;
-	/**
-	 * 
-	 * @param {*} cb 
-	 * @param {'readonly'|'readwrite'} mode 
-	 */
-	const runTransaction = function(cb,mode='readonly'){
-		return new Promise(async(resolve,reject)=>{
-			let transaction = (await db).transaction('keyValueTable',mode);
-			transaction.onerror = reject;
-			transaction.oncomplete = resolve;
-			let store = transaction.objectStore('keyValueTable');
-			cb(store);
-		});
-	};
 	const storage = {
+		/**@type {Promise<IDBDatabase>} */
+		db:null,
+		version:1,
+		dataBaseName:'keyValueDatabase',
+		tableName:'keyValueTable',
+		/**
+		 * runTransaction
+		 * @param {*} cb 
+		 * @param {'readonly'|'readwrite'} mode 
+		 */
+		runTransaction(cb,mode='readonly'){
+			return new Promise(async(resolve,reject)=>{
+				let transaction = (await this.db).transaction(this.tableName,mode);
+				transaction.onerror = reject;
+				transaction.oncomplete = resolve;
+				let store = transaction.objectStore(this.tableName);
+				cb(store);
+			});
+		},
 		/**
 		 * 初始化数据库
 		 * @return {Promise}
 		 */
 		init(){
 			return new Promise((resolve,reject)=>{
-				if(db){
+				if(this.db){
 					resolve();
 				}else{
-					db = new Promise(rs=>{
-						let request = indexedDB.open('keyValueDatabase',version);
-						request.onsuccess = function(e){
+					this.db = new Promise(rs=>{
+						let request = indexedDB.open(this.dataBaseName,this.version);
+						request.onsuccess = (e)=>{
 							rs(e.target.result);
 							resolve(e);
 						};
 						request.onerror = reject;
-						request.onupgradeneeded = function(e){
+						request.onupgradeneeded = (e)=>{
 							let db = e.target.result;
-							let store = db.createObjectStore("keyValueTable", {keyPath: "k"});
+							let store = db.createObjectStore(this.tableName, {keyPath: "k"});
 						};
 					})
 				}
@@ -52,7 +54,7 @@
 		 */
 		setItem(k,v){
 			this.init();
-			return runTransaction(store=>store.put({k,v}),'readwrite');
+			return this.runTransaction(store=>store.put({k,v}),'readwrite');
 		},
 		/**
 		 * 获取数据
@@ -62,11 +64,11 @@
 		getItem(k){
 			this.init();
 			return new Promise(async (resolve,reject)=>{
-				let request = (await db)
-					.transaction('keyValueTable','readonly')
-					.objectStore('keyValueTable')
+				let request = (await this.db)
+					.transaction(this.tableName,'readonly')
+					.objectStore(this.tableName)
 				.get(k);
-				request.onsuccess = function(){
+				request.onsuccess = ()=>{
 					let result = null;
 					if(event.target.result){
 						result = event.target.result.v;
@@ -83,7 +85,7 @@
 		 */
 		removeItem(k){
 			this.init();
-			return runTransaction(store=>store.delete(k),'readwrite');
+			return this.runTransaction(store=>store.delete(k),'readwrite');
 		},
 		/**
 		 * 清空数据
@@ -91,16 +93,37 @@
 		 */
 		clear(){
 			this.init();
-			return runTransaction(store=>store.clear());
+			return this.runTransaction(store=>store.clear(),'readwrite');
+		},
+		/**
+		 * 关闭连接
+		 */
+		close(){
+			if(!this.db) return;
+			this.db.then(db=>db.close());
+		},
+		/**
+		 * 删库
+		 */
+		drop(){
+			indexedDB.deleteDatabase(this.dataBaseName);
+			this.close();
 		},
 	};
+
+	function I2K(dbName='keyValueDatabase',tbName='keyValueTable'){
+		if(!this) return new I2K(dbName,tbName);
+		this.dataBaseName = dbName;
+		this.tableName = tbName;
+	}
+	I2K.prototype = storage;
 	// output
 	if (typeof module === "object" && typeof module.exports === "object") {
-		module.exports = storage;
+		module.exports = I2K;
 	}
 	else if (typeof define === "function" && define.amd) {
-		define(["require", "exports"], ()=>storage);
+		define(["require", "exports"], ()=>I2K);
 	}else{
-		g.indexeddb2kv = storage;
+		g.Indexeddb2kv = I2K;
 	}
 })(this);
