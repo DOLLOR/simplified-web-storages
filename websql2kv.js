@@ -5,6 +5,7 @@
 		version:1,
 		dataBaseName:'keyValueDatabase',
 		tableName:'keyValueTable',
+		size:10*1024*1024,
 		/**
 		 * 执行SQL事务
 		 * @param {String} sql 
@@ -31,7 +32,7 @@
 			if(this.db){
 				return Promise.resolve();
 			}else{
-				this.db = openDatabase(this.dataBaseName,this.version,'key-value database',10*1024*1024);
+				this.db = openDatabase(this.dataBaseName,this.version,'key-value database',this.size);
 				return this.runTransaction(`CREATE TABLE IF NOT EXISTS ${this.tableName} (k PRIMARY KEY, v, datatype)`);
 			}
 		},
@@ -92,10 +93,11 @@
 			return this.runTransaction(`DROP TABLE ${this.tableName}`);
 		},
 	};
-	function W2K(dbName='keyValueDatabase',tbName='keyValueTable'){
+	function W2K(dbName=storage.dataBaseName,tbName=storage.tableName,size=storage.size){
 		if(!this) return new W2K(dbName,tbName);
 		this.dataBaseName = dbName;
 		this.tableName = tbName;
+		this.size = size;
 	}
 	W2K.prototype = storage;
 	// output
