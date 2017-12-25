@@ -1,36 +1,38 @@
 !(function(g){
 	"use strict";
-	let db;
-	const version = 1;
-	/**
-	 * 执行SQL事务
-	 * @param {String} sql 
-	 * @param {Array} args 
-	 * @return {Promise}
-	 */
-	const runTransaction = function(sql,args=[]){
-		return new Promise((resolve,reject)=>{
-			db.transaction(function (transaction){
-				transaction.executeSql(
-					sql,
-					args,
-					(transaction,resultSet)=>resolve(resultSet),
-					(transaction,er)=>reject(er),
-				);
-			});
-		});
-	};
 	const storage = {
+		db:null,
+		version:1,
+		dataBaseName:'keyValueDatabase',
+		tableName:'keyValueTable',
+		/**
+		 * 执行SQL事务
+		 * @param {String} sql 
+		 * @param {Array} args 
+		 * @return {Promise}
+		 */
+		runTransaction(sql,args=[]){
+			return new Promise((resolve,reject)=>{
+				this.db.transaction(function (transaction){
+					transaction.executeSql(
+						sql,
+						args,
+						(transaction,resultSet)=>resolve(resultSet),
+						(transaction,er)=>reject(er),
+					);
+				});
+			});
+		},
 		/**
 		 * 初始化数据库
 		 * @return {Promise}
 		 */
 		init(){
-			if(db){
+			if(this.db){
 				return Promise.resolve();
 			}else{
-				db = openDatabase('keyValueDatabase',version,'key-value database',10*1024*1024);
-				return runTransaction('CREATE TABLE IF NOT EXISTS keyValueTable (k PRIMARY KEY, v, datatype)');
+				this.db = openDatabase(this.dataBaseName,this.version,'key-value database',10*1024*1024);
+				return this.runTransaction(`CREATE TABLE IF NOT EXISTS ${this.tableName} (k PRIMARY KEY, v, datatype)`);
 			}
 		},
 		/**
@@ -47,7 +49,7 @@
 			}else{
 				v = JSON.stringify(v);
 			}
-			return runTransaction('REPLACE INTO keyValueTable (k, v, datatype) VALUES(?, ?, ?)',[k,v,datatype]);
+			return this.runTransaction(`REPLACE INTO ${this.tableName} (k, v, datatype) VALUES(?, ?, ?)`,[k,v,datatype]);
 		},
 		/**
 		 * 获取数据
@@ -56,7 +58,7 @@
 		 */
 		getItem(k){
 			this.init();
-			return runTransaction('SELECT v,datatype FROM keyValueTable WHERE k=?',[k]).then(resultSet=>{
+			return this.runTransaction(`SELECT v,datatype FROM ${this.tableName} WHERE k=?`,[k]).then(resultSet=>{
 				if(resultSet.rows.length>0){
 					let {v,datatype} = resultSet.rows[0];
 					return datatype==='string' ? v : JSON.parse(v);
@@ -72,7 +74,7 @@
 		 */
 		removeItem(k){
 			this.init();
-			return runTransaction('DELETE FROM keyValueTable WHERE k=?',[k]);
+			return this.runTransaction(`DELETE FROM ${this.tableName} WHERE k=?`,[k]);
 		},
 		/**
 		 * 清空数据
@@ -80,16 +82,29 @@
 		 */
 		clear(){
 			this.init();
-			return runTransaction('DELETE FROM keyValueTable');
+			return this.runTransaction(`DELETE FROM ${this.tableName}`);
+		},
+		/**
+		 * 删表
+		 */
+		drop(){
+			this.init();
+			return this.runTransaction(`DROP TABLE ${this.tableName}`);
 		},
 	};
+	function W2K(dbName='keyValueDatabase',tbName='keyValueTable'){
+		if(!this) return new W2K(dbName,tbName);
+		this.dataBaseName = dbName;
+		this.tableName = tbName;
+	}
+	W2K.prototype = storage;
 	// output
 	if (typeof module === "object" && typeof module.exports === "object") {
-		module.exports = storage;
+		module.exports = W2K;
 	}
 	else if (typeof define === "function" && define.amd) {
-		define(["require", "exports"], ()=>storage);
+		define(["require", "exports"], ()=>W2K);
 	}else{
-		g.websql2kv = storage;
+		g.Websql2kv = W2K;
 	}
 })(this);
