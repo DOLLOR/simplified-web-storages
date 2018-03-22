@@ -26,9 +26,9 @@ Simplified WebSQL, IndexedDB APIs
     storage2kv.localStorage.removeItem('keyName');
     storage2kv.localStorage.clear();//clear storage
 
-    storage2kv.Websql2kv.setItem('keyName','value');
-    storage2kv.Websql2kv.getItem('keyName');
-    storage2kv.Websql2kv.removeItem('keyName');
-    storage2kv.Websql2kv.clear();//clear storage
+    storage2kv.sessionStorage.setItem('keyName','value');
+    storage2kv.sessionStorage.getItem('keyName');
+    storage2kv.sessionStorage.removeItem('keyName');
+    storage2kv.sessionStorage.clear();//clear storage
 })();
 ```
