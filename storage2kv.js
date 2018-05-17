@@ -1,30 +1,37 @@
 !(function(g){
 	"use strict";
 	let actions = ['clear','getItem','removeItem','setItem'];
+	let stroages = ['localStorage','sessionStorage'];
 	let out = {
 		/**@type{Storage} */
-		localStorage:{},
+		localStorage:{
+			storageAPI:localStorage
+		},
 		/**@type{Storage} */
-		sessionStorage:{},
-	}
-	actions.forEach(i=>{
-		out.localStorage[i] = function(...args){
-			try{
-				return localStorage[i](...args);
-			}catch(er){
-				console.error(er);
-				return null;
-			}
-		};
-		out.sessionStorage[i] = function(...args){
-			try{
-				return sessionStorage[i](...args);
-			}catch(er){
-				console.error(er);
-				return null;
-			}
-		};
+		sessionStorage:{
+			storageAPI:sessionStorage
+		},
+	};
+
+	stroages.forEach(storage=>{
+		actions.forEach(action=>{
+			out[storage][action] = function(...args){
+				try{
+					return this.storageAPI[action](...args);
+				}catch(er){
+					console.error(er);
+					return null;
+				}
+			};
+			out[storage].setJSON = function(key,obj){
+				return this.setItem(key,JSON.stringify(obj));
+			};
+			out[storage].getJSON = function(key,obj){
+				return JSON.parse(this.getItem(key));
+			};
+		});
 	});
+
 	// output
 	if (typeof module === "object" && typeof module.exports === "object") {
 		module.exports = out;
