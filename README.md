@@ -22,12 +22,16 @@ Simplified WebSQL, IndexedDB APIs
 
     // storage2kv.js
     storage2kv.localStorage.setItem('keyName','value');
+    storage2kv.localStorage.setJSON('keyName',{});
     storage2kv.localStorage.getItem('keyName');
+    storage2kv.localStorage.getJSON('keyName');
     storage2kv.localStorage.removeItem('keyName');
     storage2kv.localStorage.clear();//clear storage
 
     storage2kv.sessionStorage.setItem('keyName','value');
+    storage2kv.sessionStorage.setJSON('keyName',{});
     storage2kv.sessionStorage.getItem('keyName');
+    storage2kv.sessionStorage.getJSON('keyName');
     storage2kv.sessionStorage.removeItem('keyName');
     storage2kv.sessionStorage.clear();//clear storage
 })();
