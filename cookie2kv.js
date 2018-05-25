@@ -26,6 +26,19 @@
 !(function(g){
 	"use strict";
 
+	/**
+	 * parse url
+	 * @param {String} url 
+	 * @return {HTMLAnchorElement}
+	 */
+	function parseUrl(url) {
+		var div = document.createElement('div');
+		div.innerHTML = "<a></a>";
+		div.firstChild.href = url; // Ensures that the href is properly escaped
+		div.innerHTML = div.innerHTML; // Run the current innerHTML back through the parser
+		return div.firstChild;
+	}
+
 	function init(document){
 		var docCookies = {
 			/**
@@ -70,6 +83,10 @@
 							break;
 					}
 				}
+
+				if(sPath==null) sPath = location.pathname;
+				sPath = parseUrl(sPath).pathname;
+
 				document.cookie = encodeURIComponent(sKey) + "=" + encodeURIComponent(sValue) + sExpires + (sDomain ? "; domain=" + sDomain : "") + (sPath ? "; path=" + sPath : "") + (bSecure ? "; secure" : "");
 				return true;
 			},
@@ -81,6 +98,10 @@
 			 */
 			removeItem: function (sKey, sPath, sDomain) {
 				if (!this.hasItem(sKey)) { return false; }
+
+				if(sPath==null) sPath = location.pathname;
+				sPath = parseUrl(sPath).pathname;
+
 				document.cookie = encodeURIComponent(sKey) + "=; expires=Thu, 01 Jan 1970 00:00:00 GMT" + (sDomain ? "; domain=" + sDomain : "") + (sPath ? "; path=" + sPath : "");
 				return true;
 			},
