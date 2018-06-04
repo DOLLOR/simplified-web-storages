@@ -39,6 +39,36 @@
 		return div.firstChild;
 	}
 
+	/**
+	 * path list to root path
+	 * @param {String} path 
+	 */
+	function parentsToRoot(path){
+		var pathParents = path.split('/');
+		var list = [path];
+		for(
+			var i=1;
+			i<pathParents.length-1;
+			i++
+		){
+			var currentPathParents = pathParents.slice(0,-i);
+			list.push(currentPathParents.join('/'));
+		}
+		list.push('/');
+		return list;
+	}
+
+	/*
+	function forIn(arr,iterator,thisObj){
+		if(thisObj === undefined){
+			thisObj = null;
+		}
+		for(var i=0;i<arr.length;i++){
+			iterator.call(thisObj,arr[i],i);
+		}
+	}
+	*/
+
 	function init(document){
 		var docCookies = {
 			/**
@@ -113,10 +143,44 @@
 				if (!sKey || /^(?:expires|max\-age|path|domain|secure)$/i.test(sKey)) { return false; }
 				return (new RegExp("(?:^|;\\s*)" + encodeURIComponent(sKey).replace(/[\-\.\+\*]/g, "\\$&") + "\\s*\\=")).test(document.cookie);
 			},
+
+			/**
+			 * @return {Array<String>}
+			 */
 			keys: function () {
 				var aKeys = document.cookie.replace(/((?:^|\s*;)[^\=]+)(?=;|$)|^\s*|\s*(?:\=[^;]*)?(?:\1|$)/g, "").split(/\s*(?:\=[^;]*)?;\s*/);
 				for (var nLen = aKeys.length, nIdx = 0; nIdx < nLen; nIdx++) { aKeys[nIdx] = decodeURIComponent(aKeys[nIdx]); }
 				return aKeys;
+			},
+
+			//----------------------------------------------------
+			clear: function(sPath, sDomain){
+				var list = this.keys();
+				for(
+					var i;
+					i < list.length;
+					i++
+				){
+					this.removeItem(list[i],sPath,sDomain);
+				}
+			},
+
+			removeItemAllPath: function(key,sDomain){
+				var pathArray = parentsToRoot(location.pathname);
+				for(var index=0;index<pathArray.length;index++){
+					var value = pathArray[index];
+					this.removeItem(key,value,sDomain);
+					if(value!=='/'){
+						this.removeItem(key,value+'/',sDomain);
+					}
+				}
+			},
+			clearAllPath: function(sDomain){
+				var keyList = this.keys();
+				for(var i=0;i<keyList.length;i++){
+					var item = keyList[i];
+					this.removeItemAllPath(item,sDomain);
+				}
 			}
 		};
 		return docCookies;
