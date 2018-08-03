@@ -5,7 +5,7 @@ Simplified WebSQL, IndexedDB APIs
 ```javascript
 (async function(){
     // indexeddb2kv.js
-    let i2k = Indexeddb2kv('databaseName','storageName');
+    let i2k = new Indexeddb2kv('databaseName','storageName');
     await i2k.setItem('keyName','value');
     await i2k.getItem('keyName');
     await i2k.removeItem('keyName');
@@ -13,7 +13,7 @@ Simplified WebSQL, IndexedDB APIs
     await i2k.drop();//drop database
 
     // websql2kv.js
-    let w2k = Websql2kv('databaseName','tableName',10*1024*1024);
+    let w2k = new Websql2kv('databaseName','tableName',10*1024*1024);
     await w2k.setItem('keyName','value');
     await w2k.getItem('keyName');
     await w2k.removeItem('keyName');
