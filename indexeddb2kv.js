@@ -63,19 +63,18 @@
 		 */
 		getItem(k){
 			this.init();
-			return new Promise(async (resolve,reject)=>{
-				let request = (await this.db)
-					.transaction(this.tableName,'readonly')
-					.objectStore(this.tableName)
-				.get(k);
-				request.onsuccess = ()=>{
-					let result = null;
-					if(event.target.result){
-						result = event.target.result.v;
-					}
-					resolve(result);
-				};
-				request.onerror = reject;
+			return new Promise((resolve,reject)=>{
+				this.runTransaction(store=>{
+					let request = store.get(k);
+					request.onsuccess = ()=>{
+						let result = null;
+						if(event.target.result){
+							result = event.target.result.v;
+						}
+						resolve(result);
+					};
+					request.onerror = reject;
+				});
 			});
 		},
 		/**
