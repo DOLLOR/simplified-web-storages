@@ -68,8 +68,8 @@
 					let request = store.get(k);
 					request.onsuccess = ()=>{
 						let result = null;
-						if(event.target.result){
-							result = event.target.result.v;
+						if(request.result){
+							result = request.result.v;
 						}
 						resolve(result);
 					};
@@ -87,8 +87,8 @@
 					let request = store.getAllKeys(query, count);
 					request.onsuccess = ()=>{
 						let result = null;
-						if(event.target.result){
-							result = event.target.result;
+						if(request.result){
+							result = request.result;
 						}
 						resolve(result);
 					};
