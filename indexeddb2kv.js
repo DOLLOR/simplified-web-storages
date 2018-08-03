@@ -78,6 +78,25 @@
 			});
 		},
 		/**
+		 * 获取所有key
+		 */
+		keys(query, count){
+			this.init();
+			return new Promise((resolve,reject)=>{
+				this.runTransaction(store=>{
+					let request = store.getAllKeys(query, count);
+					request.onsuccess = ()=>{
+						let result = null;
+						if(event.target.result){
+							result = event.target.result;
+						}
+						resolve(result);
+					};
+					request.onerror = reject;
+				});
+			});
+		},
+		/**
 		 * 删除数据
 		 * @param {String} k
 		 * @return {Promise}
