@@ -29,6 +29,9 @@
 			out[storage].getJSON = function(key,obj){
 				return JSON.parse(this.getItem(key));
 			};
+			out[storage].keys = function(){
+				return Object.keys(this.storageAPI);
+			};
 		});
 	});
 
