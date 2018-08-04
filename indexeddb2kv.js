@@ -5,7 +5,7 @@
 	const storage = {
 		/**@type {Promise<IDBDatabase>} */
 		db:null,
-		version:1,
+		version:+new Date(),
 		dataBaseName:'keyValueDatabase',
 		tableName:'keyValueTable',
 		/**
@@ -40,7 +40,11 @@
 						request.onerror = reject;
 						request.onupgradeneeded = (e)=>{
 							let db = e.target.result;
-							let store = db.createObjectStore(this.tableName, {keyPath: "k"});
+							try{
+								let store = db.createObjectStore(this.tableName, {keyPath: "k"});
+							}catch(er){
+								console.log(er);
+							}
 						};
 					})
 				}
