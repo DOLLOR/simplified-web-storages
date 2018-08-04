@@ -5,7 +5,6 @@
 	const storage = {
 		/**@type {Promise<IDBDatabase>} */
 		db:null,
-		version:+new Date(),
 		dataBaseName:'keyValueDatabase',
 		tableName:'keyValueTable',
 		/**
@@ -32,7 +31,7 @@
 					resolve();
 				}else{
 					this.db = new Promise(rs=>{
-						let request = indexedDB.open(this.dataBaseName,this.version);
+						let request = indexedDB.open(this.dataBaseName,+new Date());
 						request.onsuccess = (e)=>{
 							rs(e.target.result);
 							resolve(e);
