@@ -26,27 +26,25 @@
 		 * @return {Promise}
 		 */
 		init(){
-			return new Promise((resolve,reject)=>{
-				if(this.db){
-					resolve();
-				}else{
-					this.db = new Promise(rs=>{
-						let request = indexedDB.open(this.dataBaseName,+new Date());
-						request.onsuccess = (e)=>{
-							rs(e.target.result);
-							resolve(e);
-						};
-						request.onerror = reject;
-						request.onupgradeneeded = (e)=>{
-							let db = e.target.result;
-							try{
-								let store = db.createObjectStore(this.tableName, {keyPath: "k"});
-							}catch(er){
-								console.log(er);
-							}
-						};
-					})
-				}
+			if(this.db){
+				return;
+			}
+			this.db = new Promise((resolve,reject)=>{
+				let request = indexedDB.open(this.dataBaseName,+new Date());
+				request.onsuccess = (e)=>{
+					resolve(e.target.result);
+				};
+				request.onerror = (e)=>{
+					console.log(e.target.error);
+					reject(e.target.error);
+				};
+				request.onupgradeneeded = (e)=>{
+					/**@type {IDBDatabase} */
+					let db = e.target.result;
+					if(!db.objectStoreNames.contains(this.tableName)){
+						db.createObjectStore(this.tableName, {keyPath: "k"});
+					}
+				};
 			});
 		},
 		/**
