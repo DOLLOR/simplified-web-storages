@@ -9,15 +9,16 @@
 		tableName:'keyValueTable',
 		/**
 		 * runTransaction
-		 * @param {*} cb 
+		 * @param {(IDBObjectStore)=>*} cb 
 		 * @param {'readonly'|'readwrite'} mode 
+		 * @param {String} tableName
 		 */
-		runTransaction(cb,mode='readonly'){
+		runTransaction(cb,mode='readonly',tableName=this.tableName){
 			return new Promise(async(resolve,reject)=>{
-				let transaction = (await this.db).transaction(this.tableName,mode);
+				let transaction = (await this.db).transaction(tableName,mode);
 				transaction.onerror = reject;
 				transaction.oncomplete = resolve;
-				let store = transaction.objectStore(this.tableName);
+				let store = transaction.objectStore(tableName);
 				cb(store);
 			});
 		},
