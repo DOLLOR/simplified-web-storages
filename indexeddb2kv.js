@@ -22,6 +22,21 @@
 				cb(store);
 			});
 		},
+		runRequest(action,mode='readonly',tableName=this.tableName){
+			return new Promise((resolve,reject)=>{
+				this.runTransaction(store=>{
+					let request = action(store);
+					request.onsuccess = resolve;
+					request.onerror = reject;
+				},mode,tableName);
+			}).then(ev=>{
+				if(ev.target.result){
+					return ev.target.result;
+				}else{
+					return null;
+				}
+			});
+		},
 		/**
 		 * 初始化数据库
 		 * @return {Promise}
@@ -65,38 +80,16 @@
 		 */
 		getItem(k){
 			this.init();
-			return new Promise((resolve,reject)=>{
-				this.runTransaction(store=>{
-					let request = store.get(k);
-					request.onsuccess = ()=>{
-						let result = null;
-						if(request.result){
-							result = request.result.v;
-						}
-						resolve(result);
-					};
-					request.onerror = reject;
-				});
-			});
+			return this.runRequest(store=>store.get(k))
+				.then(result=>result!=null?result.v:null);
 		},
 		/**
 		 * 获取所有key
 		 */
 		keys(query, count){
 			this.init();
-			return new Promise((resolve,reject)=>{
-				this.runTransaction(store=>{
-					let request = store.getAllKeys(query, count);
-					request.onsuccess = ()=>{
-						let result = null;
-						if(request.result){
-							result = request.result;
-						}
-						resolve(result);
-					};
-					request.onerror = reject;
-				});
-			});
+			return this.runRequest(store=>store.getAllKeys(query, count))
+				.then(result=>result!=null?result:[]);
 		},
 		/**
 		 * 删除数据
