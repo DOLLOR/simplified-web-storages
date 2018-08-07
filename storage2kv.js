@@ -32,6 +32,9 @@
 			out[storage].keys = function(){
 				return Object.keys(this.storageAPI);
 			};
+			out[storage].getAll = function(){
+				return Object.assign({},this.storageAPI);
+			};
 		});
 	});
 
