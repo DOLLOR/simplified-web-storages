@@ -92,6 +92,14 @@
 				.then(result=>result!=null?result:[]);
 		},
 		/**
+		 * 获取所有数据
+		 */
+		getAll(query, count){
+			this.init();
+			return this.runRequest(store=>store.getAll(query, count))
+				.then(result=>result!=null?result:[]);
+		},
+		/**
 		 * 删除数据
 		 * @param {String} k
 		 * @return {Promise}
