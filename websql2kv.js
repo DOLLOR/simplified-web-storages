@@ -69,6 +69,46 @@
 			});
 		},
 		/**
+		 * 获取所有key
+		 * @return {Promise<String[]>}
+		 */
+		keys(){
+			this.init();
+			return this.runTransaction(`SELECT k FROM ${this.tableName}`).then(resultSet=>{
+				let result = [];
+				if(resultSet.rows.length>0){
+					for(let i=0;
+						i<resultSet.rows.length;
+						i++
+					){
+						result.push(resultSet.rows[i].k);
+					}
+				}
+				return result;
+			});
+		},
+		/**
+		 * 获取所有数据
+		 * @return {Promise}
+		 */
+		getAll(){
+			this.init();
+			return this.runTransaction(`SELECT k,v,datatype FROM ${this.tableName}`).then(resultSet=>{
+				let result = createMap();
+				if(resultSet.rows.length>0){
+					for(let i=0;
+						i<resultSet.rows.length;
+						i++
+					){
+						let {k,v,datatype} = resultSet.rows[i];
+						v = datatype==='string' ? v : JSON.parse(v);
+						result[k] = v;
+					}
+				}
+				return result;
+			});
+		},
+		/**
 		 * 删除数据
 		 * @param {String} k
 		 * @return {Promise}
@@ -100,6 +140,25 @@
 		this.size = size;
 	}
 	W2K.prototype = storage;
+
+	let createMap = function(){
+		let fun1 = function(){
+			return Object.create(null);
+		};
+
+		let fun2 = function(){
+			return {};
+		};
+
+		try{
+			createMap = fun1;
+			return createMap();
+		}catch(er){
+			createMap = fun2;
+			return createMap();
+		}
+	};
+
 	// output
 	if (typeof module === "object" && typeof module.exports === "object") {
 		module.exports = W2K;
