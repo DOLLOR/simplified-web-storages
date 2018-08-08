@@ -33,10 +33,28 @@
 				return Object.keys(this.storageAPI);
 			};
 			out[storage].getAll = function(){
-				return Object.assign({},this.storageAPI);
+				return Object.assign(createMap(),this.storageAPI);
 			};
 		});
 	});
+
+	let createMap = function(){
+		let fun1 = function(){
+			return Object.create(null);
+		};
+
+		let fun2 = function(){
+			return {};
+		};
+
+		try{
+			createMap = fun1;
+			return createMap();
+		}catch(er){
+			createMap = fun2;
+			return createMap();
+		}
+	};
 
 	// output
 	if (typeof module === "object" && typeof module.exports === "object") {
