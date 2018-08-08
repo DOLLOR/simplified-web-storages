@@ -97,7 +97,15 @@
 		getAll(query, count){
 			this.init();
 			return this.runRequest(store=>store.getAll(query, count))
-				.then(result=>result!=null?result:[]);
+				.then(resultList=>{
+					if(resultList==null) resultList = [];
+					let result = createMap();
+					for (let index = 0; index < resultList.length; index++) {
+						const {k,v} = resultList[index];
+						result[k] = v;
+					}
+					return result;
+				});
 		},
 		/**
 		 * 删除数据
@@ -138,6 +146,25 @@
 		this.tableName = tbName;
 	}
 	I2K.prototype = storage;
+
+	let createMap = function(){
+		let fun1 = function(){
+			return Object.create(null);
+		};
+
+		let fun2 = function(){
+			return {};
+		};
+
+		try{
+			createMap = fun1;
+			return createMap();
+		}catch(er){
+			createMap = fun2;
+			return createMap();
+		}
+	};
+
 	// output
 	if (typeof module === "object" && typeof module.exports === "object") {
 		module.exports = I2K;
