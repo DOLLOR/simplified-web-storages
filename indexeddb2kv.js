@@ -85,6 +85,7 @@
 		},
 		/**
 		 * 获取所有key
+		 * @return {Promise<String[]>}
 		 */
 		keys(query, count){
 			this.init();
@@ -93,6 +94,7 @@
 		},
 		/**
 		 * 获取所有数据
+		 * @return {Promise}
 		 */
 		getAll(query, count){
 			this.init();
