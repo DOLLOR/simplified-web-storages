@@ -5,6 +5,7 @@
 		version:1,
 		dataBaseName:'keyValueDatabase',
 		tableName:'keyValueTable',
+		tableList:[],
 		size:10*1024*1024,
 		/**
 		 * 执行SQL事务
@@ -24,6 +25,26 @@
 				});
 			});
 		},
+		runSqlList(sqlList,argList=[]){
+			let promiseList = [];
+			for (let index = 0; index < sqlList.length; index++) {
+				const sql = sqlList[index];
+				const args = argList[index];
+				promiseList.push(
+					new Promise((resolve,reject)=>{
+						this.db.transaction(function (transaction){
+								transaction.executeSql(
+									sql,
+									args,
+									(transaction,resultSet)=>resolve(resultSet),
+									(transaction,er)=>reject(er),
+								);
+						});
+					})
+				);
+			}
+			return Promise.all(promiseList);
+		},
 		/**
 		 * 初始化数据库
 		 * @return {Promise}
@@ -33,7 +54,14 @@
 				return Promise.resolve();
 			}else{
 				this.db = openDatabase(this.dataBaseName,this.version,'key-value database',this.size);
-				return this.runTransaction(`CREATE TABLE IF NOT EXISTS ${this.tableName} (k PRIMARY KEY, v, datatype)`);
+				// initiate tables
+				let sqlList = [];
+				let tableList = this.tableList.concat(this.tableName);
+				for (let index = 0; index < tableList.length; index++) {
+					const tableName = tableList[index];
+					sqlList.push(`CREATE TABLE IF NOT EXISTS ${tableName} (k PRIMARY KEY, v, datatype)`);
+				}
+				return this.runSqlList(sqlList);
 			}
 		},
 		/**
@@ -133,10 +161,16 @@
 			return this.runTransaction(`DROP TABLE ${this.tableName}`);
 		},
 	};
-	function W2K(dbName=storage.dataBaseName,tbName=storage.tableName,size=storage.size){
-		if(!this) return new W2K(dbName,tbName);
+	function W2K(
+		dbName = storage.dataBaseName,
+		tbName = storage.tableName,
+		tableList = storage.tableList,
+		size = storage.size
+	){
+		if(!this) return new W2K(dbName,tbName,tableList,size);
 		this.dataBaseName = dbName;
 		this.tableName = tbName;
+		this.tableList = tableList;
 		this.size = size;
 	}
 	W2K.prototype = storage;
