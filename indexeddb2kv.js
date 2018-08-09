@@ -7,6 +7,7 @@
 		db:null,
 		dataBaseName:'keyValueDatabase',
 		tableName:'keyValueTable',
+		tableList:[],
 		/**
 		 * runTransaction
 		 * @param {(IDBObjectStore)=>*} cb 
@@ -39,7 +40,6 @@
 		},
 		/**
 		 * 初始化数据库
-		 * @return {Promise}
 		 */
 		init(){
 			if(this.db){
@@ -57,8 +57,13 @@
 				request.onupgradeneeded = (e)=>{
 					/**@type {IDBDatabase} */
 					let db = e.target.result;
-					if(!db.objectStoreNames.contains(this.tableName)){
-						db.createObjectStore(this.tableName, {keyPath: "k"});
+					let tableList = this.tableList.concat(this.tableName);
+					// initiate stores
+					for (let index = 0; index < tableList.length; index++) {
+						const tableName = tableList[index];
+						if(!db.objectStoreNames.contains(tableName)){
+							db.createObjectStore(tableName, {keyPath: "k"});
+						}
 					}
 				};
 			});
@@ -142,10 +147,15 @@
 		},
 	};
 
-	function I2K(dbName=storage.dataBaseName,tbName=storage.tableName){
-		if(!this) return new I2K(dbName,tbName);
+	function I2K(
+		dbName = storage.dataBaseName,
+		tbName = storage.tableName,
+		tableList = storage.tableList,
+	){
+		if(!this) return new I2K(dbName,tbName,tableList);
 		this.dataBaseName = dbName;
 		this.tableName = tbName;
+		this.tableList = tableList;
 	}
 	I2K.prototype = storage;
 
