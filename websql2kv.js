@@ -4,7 +4,7 @@
 		db:null,
 		version:1,
 		dataBaseName:'keyValueDatabase',
-		tableName:'keyValueTable',
+		/**@type {String[]} */
 		tableList:[],
 		size:10*1024*1024,
 		/**
@@ -25,6 +25,12 @@
 				});
 			});
 		},
+		/**
+		 * 执行SQL事务
+		 * @param {String[]} sqlList 
+		 * @param {Array[]} argList 
+		 * @return {Promise<any[]>}
+		 */
 		runSqlList(sqlList,argList=[]){
 			let promiseList = [];
 			for (let index = 0; index < sqlList.length; index++) {
@@ -56,7 +62,7 @@
 				this.db = openDatabase(this.dataBaseName,this.version,'key-value database',this.size);
 				// initiate tables
 				let sqlList = [];
-				let tableList = this.tableList.concat(this.tableName);
+				let tableList = this.tableList;
 				for (let index = 0; index < tableList.length; index++) {
 					const tableName = tableList[index];
 					sqlList.push(`CREATE TABLE IF NOT EXISTS ${tableName} (k PRIMARY KEY, v, datatype)`);
@@ -66,11 +72,11 @@
 		},
 		/**
 		 * 添加数据
+		 * @param {String} tableName 
 		 * @param {String} k 
 		 * @param {String|Object} v
-		 * @return {Promise}
 		 */
-		setItem(k,v){
+		setItem(tableName,k,v){
 			this.init();
 			let datatype = 'json';
 			if(typeof v === typeof ''){
@@ -78,16 +84,17 @@
 			}else{
 				v = JSON.stringify(v);
 			}
-			return this.runTransaction(`REPLACE INTO ${this.tableName} (k, v, datatype) VALUES(?, ?, ?)`,[k,v,datatype]);
+			return this.runTransaction(`REPLACE INTO ${tableName} (k, v, datatype) VALUES(?, ?, ?)`,[k,v,datatype]);
 		},
 		/**
 		 * 获取数据
+		 * @param {String} tableName 
 		 * @param {String} k
 		 * @return {Promise<String|Object>}
 		 */
-		getItem(k){
+		getItem(tableName,k){
 			this.init();
-			return this.runTransaction(`SELECT v,datatype FROM ${this.tableName} WHERE k=?`,[k]).then(resultSet=>{
+			return this.runTransaction(`SELECT v,datatype FROM ${tableName} WHERE k=?`,[k]).then(resultSet=>{
 				if(resultSet.rows.length>0){
 					let {v,datatype} = resultSet.rows[0];
 					return datatype==='string' ? v : JSON.parse(v);
@@ -98,11 +105,12 @@
 		},
 		/**
 		 * 获取所有key
+		 * @param {String} tableName 
 		 * @return {Promise<String[]>}
 		 */
-		keys(){
+		keys(tableName){
 			this.init();
-			return this.runTransaction(`SELECT k FROM ${this.tableName}`).then(resultSet=>{
+			return this.runTransaction(`SELECT k FROM ${tableName}`).then(resultSet=>{
 				let result = [];
 				if(resultSet.rows.length>0){
 					for(let i=0;
@@ -117,11 +125,12 @@
 		},
 		/**
 		 * 获取所有数据
+		 * @param {String} tableName 
 		 * @return {Promise}
 		 */
-		getAll(){
+		getAll(tableName){
 			this.init();
-			return this.runTransaction(`SELECT k,v,datatype FROM ${this.tableName}`).then(resultSet=>{
+			return this.runTransaction(`SELECT k,v,datatype FROM ${tableName}`).then(resultSet=>{
 				let result = createMap();
 				if(resultSet.rows.length>0){
 					for(let i=0;
@@ -138,38 +147,37 @@
 		},
 		/**
 		 * 删除数据
+		 * @param {String} tableName 
 		 * @param {String} k
-		 * @return {Promise}
 		 */
-		removeItem(k){
+		removeItem(tableName,k){
 			this.init();
-			return this.runTransaction(`DELETE FROM ${this.tableName} WHERE k=?`,[k]);
+			return this.runTransaction(`DELETE FROM ${tableName} WHERE k=?`,[k]);
 		},
 		/**
 		 * 清空数据
-		 * @return {Promise}
+		 * @param {String} tableName 
 		 */
-		clear(){
+		clear(tableName){
 			this.init();
-			return this.runTransaction(`DELETE FROM ${this.tableName}`);
+			return this.runTransaction(`DELETE FROM ${tableName}`);
 		},
 		/**
 		 * 删表
+		 * @param {String} tableName 
 		 */
-		drop(){
+		drop(tableName){
 			this.init();
-			return this.runTransaction(`DROP TABLE ${this.tableName}`);
+			return this.runTransaction(`DROP TABLE ${tableName}`);
 		},
 	};
 	function W2K(
 		dbName = storage.dataBaseName,
-		tbName = storage.tableName,
 		tableList = storage.tableList,
 		size = storage.size
 	){
-		if(!this) return new W2K(dbName,tbName,tableList,size);
+		if(!this) return new W2K(dbName,tableList,size);
 		this.dataBaseName = dbName;
-		this.tableName = tbName;
 		this.tableList = tableList;
 		this.size = size;
 	}
