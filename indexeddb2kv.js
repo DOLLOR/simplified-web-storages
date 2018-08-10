@@ -6,15 +6,16 @@
 		/**@type {Promise<IDBDatabase>} */
 		db:null,
 		dataBaseName:'keyValueDatabase',
-		tableName:'keyValueTable',
+		/**@type {String[]} */
 		tableList:[],
 		/**
 		 * runTransaction
 		 * @param {(IDBObjectStore)=>*} cb 
 		 * @param {'readonly'|'readwrite'} mode 
 		 * @param {String} tableName
+		 * @returns {Promise<Event>}
 		 */
-		runTransaction(cb,mode='readonly',tableName=this.tableName){
+		runTransaction(cb,mode='readonly',tableName){
 			return new Promise(async(resolve,reject)=>{
 				let transaction = (await this.db).transaction(tableName,mode);
 				transaction.onerror = reject;
@@ -23,7 +24,14 @@
 				cb(store);
 			});
 		},
-		runRequest(action,mode='readonly',tableName=this.tableName){
+		/**
+		 * runTransaction
+		 * @param {(IDBObjectStore)=>*} action 
+		 * @param {'readonly'|'readwrite'} mode 
+		 * @param {String} tableName
+		 * @returns {Promise<*>}
+		 */
+		runRequest(action,mode='readonly',tableName){
 			return new Promise((resolve,reject)=>{
 				this.runTransaction(store=>{
 					let request = action(store);
@@ -57,7 +65,7 @@
 				request.onupgradeneeded = (e)=>{
 					/**@type {IDBDatabase} */
 					let db = e.target.result;
-					let tableList = this.tableList.concat(this.tableName);
+					let tableList = this.tableList;
 					// initiate stores
 					for (let index = 0; index < tableList.length; index++) {
 						const tableName = tableList[index];
@@ -70,40 +78,42 @@
 		},
 		/**
 		 * 添加数据
+		 * @param {String} tableName 
 		 * @param {String} k 
 		 * @param {String|Object} v
-		 * @return {Promise}
 		 */
-		setItem(k,v){
+		setItem(tableName,k,v){
 			this.init();
-			return this.runTransaction(store=>store.put({k,v}),'readwrite');
+			return this.runTransaction(store=>store.put({k,v}),'readwrite',tableName);
 		},
 		/**
 		 * 获取数据
+		 * @param {String} tableName 
 		 * @param {String} k
-		 * @return {Promise<String|Object>}
 		 */
-		getItem(k){
+		getItem(tableName,k){
 			this.init();
-			return this.runRequest(store=>store.get(k))
+			return this.runRequest(store=>store.get(k),undefined,tableName)
 				.then(result=>result!=null?result.v:null);
 		},
 		/**
 		 * 获取所有key
+		 * @param {String} tableName 
 		 * @return {Promise<String[]>}
 		 */
-		keys(query, count){
+		keys(tableName,query, count){
 			this.init();
-			return this.runRequest(store=>store.getAllKeys(query, count))
+			return this.runRequest(store=>store.getAllKeys(query, count),undefined,tableName)
 				.then(result=>result!=null?result:[]);
 		},
 		/**
 		 * 获取所有数据
-		 * @return {Promise}
+		 * @param {String} tableName 
+		 * @return {Promise<any[]>}
 		 */
-		getAll(query, count){
+		getAll(tableName,query, count){
 			this.init();
-			return this.runRequest(store=>store.getAll(query, count))
+			return this.runRequest(store=>store.getAll(query, count),undefined,tableName)
 				.then(resultList=>{
 					if(resultList==null) resultList = [];
 					let result = createMap();
@@ -116,45 +126,49 @@
 		},
 		/**
 		 * 删除数据
+		 * @param {String} tableName 
 		 * @param {String} k
 		 * @return {Promise}
 		 */
-		removeItem(k){
+		removeItem(tableName,k){
 			this.init();
-			return this.runTransaction(store=>store.delete(k),'readwrite');
+			return this.runTransaction(store=>store.delete(k),'readwrite',tableName);
 		},
 		/**
 		 * 清空数据
 		 * @return {Promise}
 		 */
-		clear(){
+		clear(tableName){
 			this.init();
-			return this.runTransaction(store=>store.clear(),'readwrite');
+			return this.runTransaction(store=>store.clear(),'readwrite',tableName);
 		},
 		/**
 		 * 关闭连接
 		 */
 		close(){
-			if(!this.db) return;
-			this.db.then(db=>db.close());
+			if(!this.db) return Promise.resolve();
+			return this.db.then(db=>db.close());
 		},
 		/**
 		 * 删库
+		 * @returns {Promise<Event>}
 		 */
 		drop(){
-			indexedDB.deleteDatabase(this.dataBaseName);
-			this.close();
+			return new Promise((resolve,reject)=>{
+				let request = indexedDB.deleteDatabase(this.dataBaseName);
+				request.onsuccess = resolve;
+				request.onerror = reject;
+				this.close();
+			});
 		},
 	};
 
 	function I2K(
 		dbName = storage.dataBaseName,
-		tbName = storage.tableName,
 		tableList = storage.tableList,
 	){
-		if(!this) return new I2K(dbName,tbName,tableList);
+		if(!this) return new I2K(dbName,tableList);
 		this.dataBaseName = dbName;
-		this.tableName = tbName;
 		this.tableList = tableList;
 	}
 	I2K.prototype = storage;
