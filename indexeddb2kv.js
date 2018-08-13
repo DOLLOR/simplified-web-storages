@@ -17,6 +17,7 @@
 		 */
 		runTransaction(cb,mode='readonly',tableName){
 			return new Promise(async(resolve,reject)=>{
+				this.init();
 				let transaction = (await this.db).transaction(tableName,mode);
 				transaction.onerror = reject;
 				transaction.oncomplete = resolve;
@@ -25,7 +26,7 @@
 			});
 		},
 		/**
-		 * runTransaction
+		 * runRequest
 		 * @param {(IDBObjectStore)=>*} action 
 		 * @param {'readonly'|'readwrite'} mode 
 		 * @param {String} tableName
@@ -47,13 +48,11 @@
 			});
 		},
 		/**
-		 * 初始化数据库
+		 * 
+		 * @param {(IDBDatabase)=>} cb 
 		 */
-		init(){
-			if(this.db){
-				return;
-			}
-			this.db = new Promise((resolve,reject)=>{
+		openDatabase(cb){
+			return new Promise((resolve,reject)=>{
 				let request = indexedDB.open(this.dataBaseName,+new Date());
 				request.onsuccess = (e)=>{
 					resolve(e.target.result);
@@ -65,15 +64,26 @@
 				request.onupgradeneeded = (e)=>{
 					/**@type {IDBDatabase} */
 					let db = e.target.result;
-					let tableList = this.tableList;
-					// initiate stores
-					for (let index = 0; index < tableList.length; index++) {
-						const tableName = tableList[index];
-						if(!db.objectStoreNames.contains(tableName)){
-							db.createObjectStore(tableName, {keyPath: "k"});
-						}
-					}
+					cb(db);
 				};
+			});
+		},
+		/**
+		 * 初始化数据库
+		 */
+		init(){
+			if(this.db){
+				return;
+			}
+			this.db = this.openDatabase(db=>{
+				let tableList = this.tableList;
+				// initiate stores
+				for (let index = 0; index < tableList.length; index++) {
+					const tableName = tableList[index];
+					if(!db.objectStoreNames.contains(tableName)){
+						db.createObjectStore(tableName, {keyPath: "k"});
+					}
+				}
 			});
 		},
 		/**
@@ -83,7 +93,6 @@
 		 * @param {String|Object} v
 		 */
 		setItem(tableName,k,v){
-			this.init();
 			return this.runTransaction(store=>store.put({k,v}),'readwrite',tableName);
 		},
 		/**
@@ -92,7 +101,6 @@
 		 * @param {String} k
 		 */
 		getItem(tableName,k){
-			this.init();
 			return this.runRequest(store=>store.get(k),undefined,tableName)
 				.then(result=>result!=null?result.v:null);
 		},
@@ -102,7 +110,6 @@
 		 * @return {Promise<String[]>}
 		 */
 		keys(tableName,query, count){
-			this.init();
 			return this.runRequest(store=>store.getAllKeys(query, count),undefined,tableName)
 				.then(result=>result!=null?result:[]);
 		},
@@ -112,7 +119,6 @@
 		 * @return {Promise<any[]>}
 		 */
 		getAll(tableName,query, count){
-			this.init();
 			return this.runRequest(store=>store.getAll(query, count),undefined,tableName)
 				.then(resultList=>{
 					if(resultList==null) resultList = [];
@@ -131,7 +137,6 @@
 		 * @return {Promise}
 		 */
 		removeItem(tableName,k){
-			this.init();
 			return this.runTransaction(store=>store.delete(k),'readwrite',tableName);
 		},
 		/**
@@ -139,7 +144,6 @@
 		 * @return {Promise}
 		 */
 		clear(tableName){
-			this.init();
 			return this.runTransaction(store=>store.clear(),'readwrite',tableName);
 		},
 		/**
@@ -147,18 +151,40 @@
 		 */
 		close(){
 			if(!this.db) return Promise.resolve();
-			return this.db.then(db=>db.close());
+			return this.db.then(db=>{
+				this.db = null;
+				return db.close();
+			});
 		},
 		/**
 		 * 删库
 		 * @returns {Promise<Event>}
 		 */
-		drop(){
-			return new Promise((resolve,reject)=>{
-				let request = indexedDB.deleteDatabase(this.dataBaseName);
-				request.onsuccess = resolve;
-				request.onerror = reject;
-				this.close();
+		drop(tableName){
+			return new Promise(async (resolve,reject)=>{
+				if(tableName == null){
+					// delete database
+					let request = indexedDB.deleteDatabase(this.dataBaseName);
+					request.onsuccess = resolve;
+					request.onerror = reject;
+					this.close();
+				}else{
+					// database is opened, and it doesn't contain it
+					if(this.db && !(await this.db).objectStoreNames.contains(tableName)){
+						resolve();
+						return;
+					}
+					await this.close();
+
+					//re-open database and delete the store
+					this.db = this.openDatabase(db=>{
+						if(db.objectStoreNames.contains(tableName)){
+							db.deleteObjectStore(tableName);
+						}
+					});
+					await this.db;
+					resolve();
+				}
 			});
 		},
 	};
