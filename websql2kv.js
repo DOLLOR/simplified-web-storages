@@ -15,6 +15,7 @@
 		 */
 		runTransaction(sql,args=[]){
 			return new Promise((resolve,reject)=>{
+				this.init();
 				this.db.transaction(function (transaction){
 					transaction.executeSql(
 						sql,
@@ -77,7 +78,6 @@
 		 * @param {String|Object} v
 		 */
 		setItem(tableName,k,v){
-			this.init();
 			let datatype = 'json';
 			if(typeof v === typeof ''){
 				datatype = 'string';
@@ -93,7 +93,6 @@
 		 * @return {Promise<String|Object>}
 		 */
 		getItem(tableName,k){
-			this.init();
 			return this.runTransaction(`SELECT v,datatype FROM ${tableName} WHERE k=?`,[k]).then(resultSet=>{
 				if(resultSet.rows.length>0){
 					let {v,datatype} = resultSet.rows[0];
@@ -109,7 +108,6 @@
 		 * @return {Promise<String[]>}
 		 */
 		keys(tableName){
-			this.init();
 			return this.runTransaction(`SELECT k FROM ${tableName}`).then(resultSet=>{
 				let result = [];
 				if(resultSet.rows.length>0){
@@ -129,7 +127,6 @@
 		 * @return {Promise}
 		 */
 		getAll(tableName){
-			this.init();
 			return this.runTransaction(`SELECT k,v,datatype FROM ${tableName}`).then(resultSet=>{
 				let result = createMap();
 				if(resultSet.rows.length>0){
@@ -151,7 +148,6 @@
 		 * @param {String} k
 		 */
 		removeItem(tableName,k){
-			this.init();
 			return this.runTransaction(`DELETE FROM ${tableName} WHERE k=?`,[k]);
 		},
 		/**
@@ -159,7 +155,6 @@
 		 * @param {String} tableName 
 		 */
 		clear(tableName){
-			this.init();
 			return this.runTransaction(`DELETE FROM ${tableName}`);
 		},
 		/**
@@ -167,7 +162,6 @@
 		 * @param {String} tableName 
 		 */
 		drop(tableName){
-			this.init();
 			return this.runTransaction(`DROP TABLE ${tableName}`);
 		},
 	};
