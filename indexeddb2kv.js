@@ -81,7 +81,7 @@
 				for (let index = 0; index < tableList.length; index++) {
 					const tableName = tableList[index];
 					if(!db.objectStoreNames.contains(tableName)){
-						db.createObjectStore(tableName, {keyPath: "k"});
+						db.createObjectStore(tableName);
 					}
 				}
 			});
@@ -93,7 +93,7 @@
 		 * @param {String|Object} v
 		 */
 		setItem(tableName,k,v){
-			return this.runTransaction(store=>store.put({k,v}),'readwrite',tableName);
+			return this.runTransaction(store=>store.put(v,k),'readwrite',tableName);
 		},
 		/**
 		 * 获取数据
@@ -226,4 +226,4 @@
 	}else{
 		g.Indexeddb2kv = I2K;
 	}
-})(this);
+})(this||globalThis);
