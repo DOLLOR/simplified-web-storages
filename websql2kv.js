@@ -170,7 +170,7 @@
 		tableList = storage.tableList,
 		size = storage.size
 	){
-		if(!this) return new W2K(dbName,tableList,size);
+		if(!(this instanceof W2K)) return new W2K(dbName,tableList,size);
 		this.dataBaseName = dbName;
 		this.tableList = tableList;
 		this.size = size;
