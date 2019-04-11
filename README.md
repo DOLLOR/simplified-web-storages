@@ -14,6 +14,7 @@ Simplified WebSQL, IndexedDB APIs
     await i2k.clear('storeName');
     await i2k.drop('storeName');//drop store
     await i2k.drop();//drop database
+    i2k.close();//close connection
 
     // websql2kv.js
     let w2k = new Websql2kv('databaseName',['tableName'],10*1024*1024);
