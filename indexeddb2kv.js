@@ -193,7 +193,7 @@
 		dbName = storage.dataBaseName,
 		tableList = storage.tableList,
 	){
-		if(!this) return new I2K(dbName,tableList);
+		if(!(this instanceof I2K)) return new I2K(dbName,tableList);
 		this.dataBaseName = dbName;
 		this.tableList = tableList;
 	}
